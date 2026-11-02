@@ -1,0 +1,6 @@
+Set-Content .gitignore @"
+.vscode/
+cours/
+*.exe
+*.o
+"@
