@@ -49,7 +49,7 @@ gcc 4-Blockchain.c -o blockchain ; .\blockchain.exe
 <details open>
 <summary>TD2: Plateforme de Simulation d'Attaques Blockchain | (Click to open / close)</summary>
 
-## ATTAQUE 1 : 51% Attack & Double Spending ('atelier2-blockchain/1-Attack51.c')
+## ATTAQUE 1 : 51% Attack & Double Spending ('atelier2-blockchain/attack51.c')
 
 #### RUN:
 ```bash
@@ -57,7 +57,7 @@ gcc attack51.c -o attack51 ; .\attack51.exe
 ```
 ![Attack 51 Output](atelier2-blockchain/imgs/td2_attack51.png)
 
-## ATTAQUE 2 : Selfish Mining ('atelier2-blockchain/2-SelfishMining.c')
+## ATTAQUE 2 : Selfish Mining ('atelier2-blockchain/selfish_mining.c')
 
 #### RUN:
 ```bash
@@ -65,7 +65,7 @@ gcc selfish_mining.c -o selfish ; .\selfish.exe
 ```
 ![Selfish Mining Output](atelier2-blockchain/imgs/td2_selfish.png)
 
-## ATTAQUE 3 : Block Withholding Attack (BWA en Pool) ('atelier2-blockchain/3-BwaPool.c')
+## ATTAQUE 3 : Block Withholding Attack (BWA en Pool) ('atelier2-blockchain/bwa_pool.c')
 
 #### RUN:
 ```bash
@@ -73,7 +73,7 @@ gcc bwa_pool.c -o bwa ; .\bwa.exe
 ```
 ![BWA Pool Output](atelier2-blockchain/imgs/td2_bwa.png)
 
-## ATTAQUE 4 : Sybil Attack en Réseau P2P ('atelier2-blockchain/4-SybilP2P.c')
+## ATTAQUE 4 : Sybil Attack en Réseau P2P ('atelier2-blockchain/sybil_p2p.c')
 
 #### RUN:
 ```bash
@@ -81,7 +81,7 @@ gcc sybil_p2p.c -o sybil ; .\sybil.exe
 ```
 ![Sybil Attack Output](atelier2-blockchain/imgs/td2_sybil.png)
 
-## EVALUATION EXPERIMENTALE : Banc d'Essai & Benchmark ('atelier2-blockchain/5-Benchmark.c')
+## EVALUATION EXPERIMENTALE : Banc d'Essai & Benchmark ('atelier2-blockchain/benchmark.c')
 
 #### RUN:
 ```bash
