@@ -1,70 +1,48 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#include "sha256.h"
-
-typedef struct {
-    int height;
-    char data[64];
-    char prev_hash[65];
-    char hash[65];
-} Block;
-
-int simulate_51_attack(int enable_defense) {
-    printf("--- EXERCICE 1 : ATTAQUE DES 51%% & DOUBLE-SPENDING (Defense : %s) ---\n",
-           enable_defense ? "ACTIVEE" : "DESACTIVEE");
-
-    double attacker_power = 0.55; // 55% du hashrate total
-    int honest_chain_len = 0;
-    int private_chain_len = 0;
-    int max_rounds = 100;
-    int double_spend_success = 0;
-
-    printf("[ETAPE 1] Transaction victime sur la chaine publique : \"Attaquant -> Marchand : 1000 Tokens\"\n");
-    printf("[ETAPE 2] L'attaquant mine en secret sa branche privee : \"Attaquant -> Moi-meme : 1000 Tokens\"\n\n");
-
-    for (int r = 1; r <= max_rounds; r++) {
-        double p = (double)rand() / RAND_MAX;
-        if (p < attacker_power) {
-            private_chain_len++; // L'attaquant trouve un bloc secret
-        } else {
-            honest_chain_len++;  // Les honnetes avancent sur la chaine publique
-        }
-
-        // L'attaquant tente de diffuser sa chaine des qu'il depasse les confirmations
-        if (honest_chain_len >= 5 && private_chain_len > honest_chain_len) {
-            int reorg_depth = honest_chain_len;
-            printf(">>> [Round %2d] L'attaquant diffuse sa chaine privee (Longueur : %d vs Publique : %d)\n",
-                   r, private_chain_len, honest_chain_len);
-            printf("    -> Profondeur de reorganisation demandee : %d blocs\n", reorg_depth);
-
-            if (enable_defense) {
-                // CONTRE-MESURE : Checkpoint & seuil max de reorg = 3 blocs
-                if (reorg_depth > 3) {
-                    printf("    [ALERTE SECURITE] Reorg depth = %d > seuil max autorise (3) !\n", reorg_depth);
-                    printf("    [ACTION DEFENSE] Chaine privee REJETEE. Le double-spending a ECHOUE !\n\n");
-                    return 0; // Attaque contrée
-                }
-            } else {
-                // SANS DEFENSE : Regle de la chaine la plus longue acceptee aveuglement
-                printf("    [VULNERABILITE] Le reseau adopte la chaine de l'attaquant (plus longue) !\n");
-                printf("    [SUCCES ATTAQUE] La transaction du Marchand a DISPARU. Vol de 1000 Tokens confirme.\n\n");
-                return 1; // Attaque réussie
-            }
-        }
-    }
-    return 0;
-}
+#include "blockchain.h"
 
 int main() {
-    srand(42);
+    printf("========================================================================\n");
+    printf("   ATTAQUE 51%% SUR LA BLOCKCHAIN DE L'ATELIER 1                         \n");
+    printf("========================================================================\n\n");
 
-    // Test 1 : Sans défense
-    simulate_51_attack(0);
+    // 1. Chaine publique normale de l'Atelier 1
+    Blockchain public_chain;
+    init_blockchain(&public_chain, 2);
+    add_block(&public_chain, "Alice->Marchand:10 BTC (Voiture)");
 
-    // Test 2 : Avec module de mitigation
-    simulate_51_attack(1);
+    printf("[CHAINE PUBLIQUE HONNETE] Taille : %d blocs\n", public_chain.size);
+    printf("  -> Bloc #1 : \"%s\"\n", public_chain.chain[1].data);
+    printf("  -> Hash    : %.20s...\n\n", public_chain.chain[1].hash);
+
+    // 2. Chaine pirate concurrente (meme base)
+    Blockchain pirate_chain;
+    init_blockchain(&pirate_chain, 2);
+    pirate_chain.chain[0] = public_chain.chain[0]; // Meme Genesis
+    add_block(&pirate_chain, "Alice->PirateWallet:10 BTC (DOUBLE SPEND)");
+    add_block(&pirate_chain, "Pirate:Bloc secret #2");
+
+    printf("[CHAINE PIRATE SECRETE] Taille : %d blocs (PLUS LONGUE)\n", pirate_chain.size);
+    printf("  -> Bloc #1 : \"%s\"\n", pirate_chain.chain[1].data);
+    printf("  -> Hash    : %.20s...\n\n", pirate_chain.chain[1].hash);
+
+    // 3. Sans defense : Reorganisation de la Blockchain
+    printf(">>> SCENARIO 1 : SANS DEFENSE (Regle de la chaine la plus longue) <<<\n");
+    Blockchain hacked_chain = pirate_chain; // Ecrase la publique
+    printf("  [SUCCES ATTAQUE] La chaine publique a ete remplacee par la chaine pirate !\n");
+    printf("  -> Transaction marchand supprimee. Double spending confirme (10 BTC voles).\n");
+    printf("  -> Validite verify_chain() : %s\n\n", verify_chain(&hacked_chain) ? "VALIDE" : "INVALIDE");
+
+    // 4. Avec defense : Verification de la profondeur de Reorganisation
+    printf(">>> SCENARIO 2 : AVEC DEFENSE (Detection de Reorganisation Anormale) <<<\n");
+    int reorg_depth = public_chain.size - 1;
+    if (reorg_depth > 0) {
+        printf("  [DETECTION] Alerte : Tentative de reecrire %d bloc(s) du passe !\n", reorg_depth);
+        printf("  [DEFENSE] Remplacement bloque par Checkpoint. Chaine publique preservee.\n");
+        printf("  -> Validite verify_chain() : %s (Paiement Marchand securise).\n", verify_chain(&public_chain) ? "VALIDE" : "INVALIDE");
+    }
 
     return 0;
 }

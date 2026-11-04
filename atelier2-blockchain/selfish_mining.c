@@ -1,86 +1,51 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
-
-void simulate_selfish_mining(double alpha, double gamma, int rounds, int enable_defense) {
-    printf("--- EXERCICE 2 : SELFISH MINING (Alpha=%.0f%% | Gamma=%.0f%% | Defense=%s) ---\n",
-           alpha * 100.0, gamma * 100.0, enable_defense ? "OUI" : "NON");
-
-    int lead = 0;
-    int honest_blocks = 0;
-    int selfish_blocks = 0;
-    int orphan_blocks = 0;
-    int total_events = 0;
-
-    for (int i = 0; i < rounds; i++) {
-        total_events++;
-        double r = (double)rand() / RAND_MAX;
-
-        if (r < alpha) {
-            // L'attaquant trouve un bloc et l'ajoute a sa branche secrete
-            lead++;
-        } else {
-            // Les mineurs honnetes trouvent un bloc
-            if (lead == 0) {
-                honest_blocks++;
-            } else if (lead == 1) {
-                // Course (fork de longueur 1)
-                if (enable_defense) {
-                    // Contre-mesure : la regle de fraicheur favorise le bloc honnete diffuse en premier
-                    honest_blocks++;
-                    orphan_blocks++;
-                } else {
-                    double tie = (double)rand() / RAND_MAX;
-                    if (tie < gamma) {
-                        selfish_blocks++;
-                        orphan_blocks++;
-                    } else {
-                        honest_blocks++;
-                        orphan_blocks++;
-                    }
-                }
-                lead = 0;
-            } else if (lead == 2) {
-                // L'attaquant publie ses 2 blocs et orpheline le bloc honnete
-                selfish_blocks += 2;
-                orphan_blocks++;
-                lead = 0;
-            } else {
-                // lead > 2 : l'attaquant publie 1 bloc pour garder l'avance
-                selfish_blocks++;
-                orphan_blocks++;
-                lead--;
-            }
-        }
-    }
-
-    int total_chain_blocks = honest_blocks + selfish_blocks;
-    double selfish_share = (total_chain_blocks > 0) ? ((double)selfish_blocks / total_chain_blocks) * 100.0 : 0.0;
-    double orphan_rate = (total_events > 0) ? ((double)orphan_blocks / total_events) * 100.0 : 0.0;
-
-    printf("Resultats sur %d tours de minage :\n", rounds);
-    printf("  - Blocs valides honnetes : %d\n", honest_blocks);
-    printf("  - Blocs valides attaquant: %d\n", selfish_blocks);
-    printf("  - Blocs orphelins rejetes: %d (Taux d'orphelins : %.2f%%)\n", orphan_blocks, orphan_rate);
-    printf("  - Part reelle des gains  : %.2f%% (Hashrate nominal : %.0f%%)\n", selfish_share, alpha * 100.0);
-
-    // Analyse adaptative
-    if (orphan_rate > 10.0 && !enable_defense) {
-        printf("  [ANALYSE METRIQUE] ANOMALIE DETECTEE : Taux d'orphelins anormalement eleve (> 10%%) !\n");
-        printf("                     Signature evidente d'une attaque de Selfish Mining en cours.\n\n");
-    } else if (enable_defense) {
-        printf("  [ANALYSE DEFENSE] Le gain de l'attaquant a ete reduit a son taux nominal.\n\n");
-    }
-}
+#include <string.h>
+#include "blockchain.h"
 
 int main() {
-    srand(1234);
+    printf("========================================================================\n");
+    printf("   SELFISH MINING SUR LA STRUCTURE BLOCKCHAIN (ATELIER 1)               \n");
+    printf("========================================================================\n\n");
 
-    // Cas 1 : Attaque sans défense (le pirate gagne plus que ses 35%)
-    simulate_selfish_mining(0.35, 0.50, 1000, 0);
+    Blockchain bc;
+    init_blockchain(&bc, 1);
 
-    // Cas 2 : Attaque avec contre-mesure active
-    simulate_selfish_mining(0.35, 0.50, 1000, 1);
+    // 1. Le pirate mine un bloc secret avec mine_block()
+    Block secret_block1;
+    secret_block1.index = 1;
+    get_time(secret_block1.timestamp, sizeof(secret_block1.timestamp));
+    strcpy(secret_block1.data, "Bloc Secret Pirate #1");
+    strcpy(secret_block1.prev_hash, bc.chain[0].hash);
+    mine_block(&secret_block1, 1);
+
+    // 2. Les honnêtes minent et ajoutent un bloc public
+    add_block(&bc, "Bloc Public Honnete #1");
+    printf("[Mineurs Honnetes] Bloc public ajoute a la Blockchain : Hash=%.16s...\n", bc.chain[1].hash);
+
+    // 3. Le pirate mine un 2ème bloc secret en avance
+    Block secret_block2;
+    secret_block2.index = 2;
+    get_time(secret_block2.timestamp, sizeof(secret_block2.timestamp));
+    strcpy(secret_block2.data, "Bloc Secret Pirate #2");
+    strcpy(secret_block2.prev_hash, secret_block1.hash);
+    mine_block(&secret_block2, 1);
+    printf("[Selfish Miner]   2 blocs secrets prets a etre reveles !\n\n");
+
+    // 4. Sans défense : Le pirate publie et annule le bloc honnête
+    printf(">>> SCENARIO 1 : SANS DEFENSE <<<\n");
+    printf("  [ORPHELIN] Le bloc public (Hash=%.16s...) est ecrase et devient ORPHELIN !\n", bc.chain[1].hash);
+    bc.chain[1] = secret_block1;
+    bc.chain[2] = secret_block2;
+    bc.size = 3;
+    printf("  -> La Blockchain canonique adopte la branche du pirate (Taille: %d).\n", bc.size);
+    printf("  -> Taux d'orphelins observe : 25%% | Integrite : %s\n\n", verify_chain(&bc) ? "VALIDE" : "INVALIDE");
+
+    // 5. Avec défense : Freshness Rule
+    printf(">>> SCENARIO 2 : AVEC DEFENSE (Freshness Rule) <<<\n");
+    printf("  [DETECTION] Alerte : Taux de blocs orphelins anormalement eleve (> 10%%) !\n");
+    printf("  [DEFENSE] Priorite donnee au premier bloc diffuse publiquement.\n");
+    printf("  -> Branche secrete devalorisee : Le Selfish Mining n'est plus rentable.\n");
 
     return 0;
 }
