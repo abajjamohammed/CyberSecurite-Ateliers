@@ -93,14 +93,14 @@ gcc benchmark.c -o benchmark ; .\benchmark.exe
 Le programme génère automatiquement le fichier brut **[`atelier2-blockchain/simulation_results.csv`](atelier2-blockchain/simulation_results.csv)** contenant les métriques d'évaluation (Précision, Rappel, Pertes financières) pour le tracé des graphiques comparatifs :
 
 ```csv
-Attaque,Etat,Precision,Rappel,Pertes_Tokens
-51_Attack,Attaquee,0.0,0.0,1000.0
+Attaque,Etat,Precision,Rappel,Pertes_BTC
+51_Attack,Attaquee,0.0,0.0,10.0
 51_Attack,Protegee,100.0,100.0,0.0
-Selfish_Mining,Attaquee,0.0,0.0,350.0
-Selfish_Mining,Protegee,96.5,94.2,15.0
-BWA_Pool,Attaquee,0.0,0.0,312.5
-BWA_Pool,Protegee,100.0,100.0,25.0
-Sybil_P2P,Attaquee,0.0,0.0,480.0
+Selfish_Mining,Attaquee,0.0,0.0,12.5
+Selfish_Mining,Protegee,96.5,94.2,0.0
+BWA_Pool,Attaquee,0.0,0.0,25.0
+BWA_Pool,Protegee,100.0,100.0,0.0
+Sybil_P2P,Attaquee,0.0,0.0,0.0
 Sybil_P2P,Protegee,98.0,95.0,0.0
 ```
 
