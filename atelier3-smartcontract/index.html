@@ -3,288 +3,307 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MiniSocial DApp - Web3</title>
-    <!-- Web3.js CDN -->
+    <title>MiniSocial • Protocole Décentralisé</title>
     <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
     <style>
-        :root { --primary: #3b82f6; --success: #10b981; --danger: #ef4444; --bg: #f8fafc; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
-        .container { max-width: 650px; margin: 0 auto; }
-        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07); margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        h1, h2, h3 { margin-top: 0; color: #0f172a; }
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
-        .badge-green { background: #dcfce7; color: #15803d; }
-        .badge-red { background: #fee2e2; color: #b91c1c; }
-        .badge-blue { background: #dbeafe; color: #1d4ed8; }
-        input, textarea, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 14px; margin-top: 8px; }
-        button { background: var(--primary); color: white; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
-        button:hover { filter: brightness(0.92); }
-        button:disabled { background: #94a3b8; cursor: not-allowed; }
-        .post { border-left: 4px solid var(--primary); background: #f8fafc; padding: 12px; border-radius: 0 8px 8px 0; margin-bottom: 12px; }
-        .post-author { font-size: 12px; color: #64748b; font-family: monospace; }
-        .post-msg { font-size: 15px; margin: 6px 0 0 0; font-weight: 500; }
-        .alert { padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 13px; display: none; }
-        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .alert-info { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 15px;
+        }
+        .app-container {
+            max-width: 650px;
+            margin: 0 auto;
+        }
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+        }
+        h1 { font-size: 20px; margin: 0; font-weight: 700; color: #fff; }
+        .network-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-weight: 600;
+        }
+        .btn-action {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-action:hover { background: var(--primary-hover); }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
+        .account-badge {
+            background: #0f172a;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            margin-top: 10px;
+            display: inline-block;
+        }
+        .contract-field {
+            margin-top: 16px;
+        }
+        .contract-field label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .contract-input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+        }
+        .contract-input:focus { border-color: var(--primary); }
+        textarea {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+            outline: none;
+        }
+        textarea:focus { border-color: var(--primary); }
+        .feed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .post-box {
+            background: #0f172a;
+            border-left: 3px solid var(--primary);
+            border-radius: 0 8px 8px 0;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            border-top: 1px solid rgba(255,255,255,0.03);
+        }
+        .post-author {
+            font-size: 12px;
+            font-family: monospace;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .post-content {
+            font-size: 15px;
+            line-height: 1.4;
+            color: #f1f5f9;
+        }
+        .status-log {
+            font-size: 13px;
+            color: var(--success);
+            margin-top: 10px;
+            min-height: 18px;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- Header Card -->
-    <div class="card">
-        <h1>MiniSocial Web3 DApp</h1>
-        <p style="margin: 0 0 10px 0; color: #64748b;">Réseau social décentralisé sur Ethereum Sepolia</p>
-        
-        <div><strong>Réseau :</strong> <span id="netBadge" class="badge badge-red">Non connecté</span></div>
-        <div style="margin-top: 6px;"><strong>Compte :</strong> <span id="accText" style="font-family: monospace; font-size: 13px;">-</span></div>
-        <button id="btnSyncAccount" onclick="refreshAccount()" disabled style="width: auto; padding: 6px 10px; font-size: 12px;">Synchroniser avec MetaMask</button>
-        <div style="margin-top: 6px;"><strong>Solde :</strong> <span id="balText" style="font-weight: 600;">- ETH</span></div>
-        
-        <div id="alertBox" class="alert alert-error"></div>
-    </div>
+<div class="app-container">
+    <div class="panel">
+        <header>
+            <div>
+                <h1>MiniSocial Protocol</h1>
+                <span style="font-size: 12px; color: var(--text-muted);">Registre social immuable sur Ethereum</span>
+            </div>
+            <span class="network-badge">Sepolia Testnet</span>
+        </header>
 
-    <!-- Contract Config -->
-    <div class="card" style="padding: 14px;">
-        <label style="font-size: 12px; font-weight: 600; color: #64748b;">ADRESSE DU SMART CONTRACT (SEPOLIA)</label>
-        <p style="font-size: 13px; color: #64748b;">Saisissez l'adresse obtenue après le déploiement du contrat. Elle est différente de votre adresse MetaMask et sera mémorisée dans ce navigateur.</p>
-        <input type="text" id="contractInput" placeholder="0x..." style="font-family: monospace; font-size: 13px;">
-        <button onclick="updateContractAddress()" style="background: #475569; margin-top: 6px; padding: 8px;">Mettre à jour l'adresse</button>
-    </div>
-
-    <!-- Publish Card -->
-    <div class="card">
-        <h3>Publier un message</h3>
-        <textarea id="postMsg" rows="2" placeholder="Quoi de neuf sur la blockchain ?"></textarea>
-        <button id="btnPublish" onclick="publish()">Publier sur Sepolia</button>
-    </div>
-
-    <!-- Feed Card -->
-    <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0;">Fil d'actualité (<span id="postCount">0</span>)</h3>
-            <button onclick="loadFeed()" style="width: auto; padding: 6px 14px; background: #10b981; font-size: 13px;">Rafraîchir</button>
+        <button id="btnConnect" class="btn-action" onclick="connectWallet()">Connecter le Wallet</button>
+        <div id="accountInfo" style="display:none;">
+            <div class="account-badge" id="accountAddress">0x...</div>
         </div>
-        <div id="feedList" style="margin-top: 14px;"></div>
+        <div class="contract-field">
+            <label for="contractAddress">Adresse du contrat (Sepolia)</label>
+            <input id="contractAddress" class="contract-input" type="text" placeholder="0x..." autocomplete="off">
+            <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+                <button class="btn-action" onclick="configureContract()">Charger le contrat</button>
+            </div>
+        </div>
+        <div id="statusMessage" class="status-log"></div>
+    </div>
+
+    <div class="panel">
+        <h2 style="font-size: 16px; margin-bottom: 12px;">Émettre une nouvelle publication</h2>
+        <textarea id="postInput" rows="3" placeholder="Partagez un message sur la blockchain..."></textarea>
+        <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+            <button id="btnPublish" class="btn-action" onclick="publishPost()">Diffuser sur la Blockchain</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="feed-header">
+            <h2 style="font-size: 16px; margin: 0;">Fil d'actualité On-Chain (<span id="postCount">0</span>)</h2>
+            <button class="btn-action" onclick="loadPosts()" style="padding: 6px 12px; font-size: 12px;">Actualiser</button>
+        </div>
+        <div id="postsFeed">
+            <p style="color: var(--text-muted); font-size: 13px;">Connectez votre compte pour explorer les publications.</p>
+        </div>
     </div>
 </div>
 
 <script>
-    const CONTRACT_STORAGE_KEY = "minisocialContractAddress";
-    let CONTRACT_ADDRESS = localStorage.getItem(CONTRACT_STORAGE_KEY) || "";
-
     const CONTRACT_ABI = [
         { "inputs": [{"name": "_message", "type": "string"}], "name": "publishPost", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
         { "inputs": [{"name": "index", "type": "uint256"}], "name": "getPost", "outputs": [{"name": "", "type": "string"}, {"name": "", "type": "address"}], "stateMutability": "view", "type": "function" },
         { "inputs": [], "name": "getTotalPosts", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function" }
     ];
 
-    const SEPOLIA_CHAIN_ID = "0xaa36a7"; // 11155111
-
     let web3;
     let contract;
-    let currentAccount = null;
+    let userAccount = null;
 
-    function showAlert(msg, isError = true) {
-        const box = document.getElementById("alertBox");
-        box.style.display = "block";
-        box.className = isError ? "alert alert-error" : "alert alert-info";
-        box.innerText = msg;
-    }
-
-    function clearAlert() {
-        document.getElementById("alertBox").style.display = "none";
-    }
-
-    async function init() {
-        document.getElementById("contractInput").value = CONTRACT_ADDRESS;
-
-        if (!window.ethereum) {
-            showAlert("MetaMask non détecté. Installez l'extension pour utiliser la DApp.");
-            document.getElementById("feedList").innerHTML = "<p style='color: #64748b;'>Connectez MetaMask pour accéder au fil d'actualité.</p>";
-            return;
-        }
-
+    async function connectWallet() {
+        if (!window.ethereum) return alert("MetaMask est requis !");
         web3 = new Web3(window.ethereum);
-        document.getElementById("btnSyncAccount").disabled = false;
-        window.ethereum.on("accountsChanged", (accounts) => {
-            syncAccount(accounts).catch((err) => {
-                showAlert("Impossible de synchroniser le compte MetaMask : " + err.message);
-            });
-        });
-        window.ethereum.on("chainChanged", () => location.reload());
-        window.addEventListener("focus", refreshAccount);
-        document.addEventListener("visibilitychange", () => {
-            if (!document.hidden) refreshAccount();
-        });
 
         try {
             const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-            await syncAccount(accounts);
-            await checkNetwork();
-            if (CONTRACT_ADDRESS && web3.utils.isAddress(CONTRACT_ADDRESS)) {
-                contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+            if (!accounts.length) throw new Error("Aucun compte disponible dans MetaMask.");
+
+            userAccount = accounts[0];
+            document.getElementById("btnConnect").style.display = "none";
+            document.getElementById("accountInfo").style.display = "block";
+            document.getElementById("accountAddress").innerText = `Compte actif : ${userAccount}`;
+
+            if (document.getElementById("contractAddress").value.trim()) {
+                configureContract();
+            } else {
+                contract = null;
+                document.getElementById("statusMessage").innerText =
+                    "Wallet connecté. Saisissez l'adresse du contrat Sepolia puis cliquez sur Charger le contrat.";
             }
-            await loadFeed();
         } catch (err) {
-            showAlert("Connexion refusée : " + err.message);
+            document.getElementById("statusMessage").innerText = "Échec de connexion du wallet : " + err.message;
         }
     }
 
-    async function syncAccount(accounts) {
-        const selectedAddress = window.ethereum.selectedAddress;
-        const account = (selectedAddress && accounts.find(
-            (address) => address.toLowerCase() === selectedAddress.toLowerCase()
-        )) || accounts[0] || null;
-        if (account === currentAccount) return;
+    function configureContract() {
+        if (!web3) return alert("Connectez d'abord votre wallet.");
 
-        setCurrentAccount(account);
-        if (account) await checkBalance();
-    }
+        const address = document.getElementById("contractAddress").value.trim();
+        if (!web3.utils.isAddress(address)) {
+            contract = null;
+            document.getElementById("statusMessage").innerText =
+                "Adresse de contrat invalide. Vérifiez l'adresse déployée sur Sepolia.";
+            return;
+        }
 
-    async function refreshAccount() {
         try {
-            const accounts = await window.ethereum.request({ method: "eth_accounts" });
-            await syncAccount(accounts);
+            contract = new web3.eth.Contract(CONTRACT_ABI, address);
+            document.getElementById("statusMessage").innerText = "Prêt à interagir avec le smart contract.";
+            loadPosts();
         } catch (err) {
-            showAlert("Impossible de vérifier le compte MetaMask : " + err.message);
+            contract = null;
+            document.getElementById("statusMessage").innerText = "Impossible de charger le contrat : " + err.message;
         }
     }
 
-    function setCurrentAccount(account) {
-        currentAccount = account;
-        document.getElementById("accText").innerText = account || "-";
-        document.getElementById("balText").innerText = account ? "Chargement..." : "- ETH";
-    }
-
-    async function checkNetwork() {
-        const chainId = await window.ethereum.request({ method: "eth_chainId" });
-        const badge = document.getElementById("netBadge");
-
-        if (chainId === SEPOLIA_CHAIN_ID) {
-            badge.className = "badge badge-green";
-            badge.innerText = "Connecté à Sepolia (11155111)";
-            clearAlert();
-        } else {
-            badge.className = "badge badge-red";
-            badge.innerText = "Mauvais réseau !";
-            showAlert("Veuillez basculer MetaMask sur le réseau de test Sepolia.");
-            try {
-                await window.ethereum.request({
-                    method: "wallet_switchEthereumChain",
-                    params: [{ chainId: SEPOLIA_CHAIN_ID }]
-                });
-            } catch (switchError) {
-                console.warn(switchError);
-            }
-        }
-    }
-
-    async function checkBalance() {
-        const account = currentAccount;
-        if (!account) return;
-        const balWei = await web3.eth.getBalance(account);
-        if (currentAccount !== account) return;
-
-        const balEth = web3.utils.fromWei(balWei, "ether");
-        const formatted = parseFloat(balEth).toFixed(4);
-        document.getElementById("balText").innerText = formatted + " ETH";
-
-        const chainId = await window.ethereum.request({ method: "eth_chainId" });
-        if (currentAccount !== account) return;
-        if (parseFloat(formatted) === 0 && chainId === SEPOLIA_CHAIN_ID) {
-            showAlert("Attention : Ce compte a 0 ETH. Vous ne pourrez pas payer le gaz. Basculez vers le compte qui a des SepoliaETH !");
-        }
-    }
-
-    function updateContractAddress() {
-        if (!web3) {
-            showAlert("Connectez MetaMask avant de configurer le contrat.");
-            return;
-        }
-
-        const newAddr = document.getElementById("contractInput").value.trim();
-        if (!web3.utils.isAddress(newAddr)) {
-            showAlert("Adresse Ethereum invalide !");
-            return;
-        }
-
-        CONTRACT_ADDRESS = web3.utils.toChecksumAddress(newAddr);
-        localStorage.setItem(CONTRACT_STORAGE_KEY, CONTRACT_ADDRESS);
-        contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
-        clearAlert();
-        loadFeed();
-    }
-
-    async function publish() {
-        if (!currentAccount) return showAlert("Connectez un compte MetaMask avant de publier.");
-        if (!contract) return showAlert("Configurez d'abord l'adresse du contrat déployé.");
-        if (await window.ethereum.request({ method: "eth_chainId" }) !== SEPOLIA_CHAIN_ID) {
-            return showAlert("Veuillez connecter MetaMask au réseau Sepolia.");
-        }
-
-        const text = document.getElementById("postMsg").value.trim();
-        if (!text) return showAlert("Écrivez un message avant de publier.");
+    async function publishPost() {
+        const text = document.getElementById("postInput").value.trim();
+        if (!text) return alert("Le texte ne peut pas être vide.");
+        if (!userAccount) return alert("Veuillez connecter votre compte d'abord.");
+        if (!contract) return alert("Configurez une adresse de contrat valide avant de publier.");
 
         const btn = document.getElementById("btnPublish");
         btn.disabled = true;
-        btn.innerText = "Validation sur MetaMask...";
-        clearAlert();
+        document.getElementById("statusMessage").innerText = "Envoi de la transaction... En attente de signature.";
 
         try {
-            await contract.methods.publishPost(text).send({ from: currentAccount });
-            document.getElementById("postMsg").value = "";
-            showAlert("Message publié et miné sur Sepolia !", false);
-            await loadFeed();
-            await checkBalance();
+            await contract.methods.publishPost(text).send({ from: userAccount });
+            document.getElementById("postInput").value = "";
+            document.getElementById("statusMessage").innerText = "Publication validée et inscrite dans le bloc !";
+            loadPosts();
         } catch (err) {
-            showAlert("Échec de la transaction : " + (err.message || err));
+            document.getElementById("statusMessage").innerText = "Transaction annulée.";
         } finally {
             btn.disabled = false;
-            btn.innerText = "Publier sur Sepolia";
         }
     }
 
-    async function loadFeed() {
-        const list = document.getElementById("feedList");
-        if (!contract) {
-            list.innerHTML = "<p style='color: #64748b;'>Configurez l'adresse du contrat déployé pour afficher les posts.</p>";
-            document.getElementById("postCount").innerText = "0";
-            return;
-        }
-
-        list.innerHTML = "<p style='color: #64748b;'>Chargement des posts...</p>";
+    async function loadPosts() {
+        if (!contract) return;
+        const feed = document.getElementById("postsFeed");
 
         try {
             const count = await contract.methods.getTotalPosts().call();
             document.getElementById("postCount").innerText = count;
 
             if (count == 0) {
-                list.innerHTML = "<p style='color: #94a3b8;'>Aucun post pour le moment. Soyez le premier !</p>";
+                feed.innerHTML = "<p style='color: var(--text-muted); font-size: 13px;'>Aucun message trouvé sur la blockchain.</p>";
                 return;
             }
 
-            list.innerHTML = "";
+            feed.innerHTML = "";
             for (let i = count - 1; i >= 0; i--) {
-                const post = await contract.methods.getPost(i).call();
-                list.innerHTML += `
-                    <div class="post">
-                        <div class="post-author">👤 ${post[1].slice(0,6)}...${post[1].slice(-4)} (Post #${i})</div>
-                        <div class="post-msg">${escapeHtml(post[0])}</div>
+                const item = await contract.methods.getPost(i).call();
+                feed.innerHTML += `
+                    <div class="post-box">
+                        <div class="post-author">Émetteur : ${item[1]} • (Post #${i})</div>
+                        <div class="post-content">${escape(item[0])}</div>
                     </div>
                 `;
             }
-        } catch (err) {
-            list.innerHTML = `<p style='color: var(--danger);'>Erreur de chargement : vérifiez l'adresse du contrat.</p>`;
+        } catch (e) {
+            feed.innerHTML = "<p style='color: #ef4444; font-size: 13px;'>Erreur lors de la lecture des événements.</p>";
         }
     }
 
-    function escapeHtml(text) {
-        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return text.replace(/[&<>"']/g, m => map[m]);
+    function escape(s) {
+        return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
 
-    window.addEventListener("load", init);
+    if (window.ethereum) {
+        window.ethereum.on('accountsChanged', accs => {
+            if (accs.length) { userAccount = accs[0]; document.getElementById("accountAddress").innerText = `Compte actif : ${userAccount}`; loadPosts(); }
+            else location.reload();
+        });
+    }
 </script>
 
 </body>
