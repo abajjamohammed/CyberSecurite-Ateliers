@@ -105,3 +105,32 @@ Sybil_P2P,Protegee,98.0,95.0,0.0
 ```
 
 </details>
+
+<details open>
+<summary>TD3: Smart Contract "Mini Réseau Social" en Solidity | (Click to open / close)</summary>
+
+## SMART CONTRACT : 'atelier3-smartcontract/MiniSocial.sol'
+
+Implémentation en Solidity (v0.8.26) d'un contrat de mini réseau social décentralisé sur la blockchain Ethereum (Sepolia Testnet).
+
+### 1. Compilation sur Remix IDE
+Compilation du smart contract sans avertissement ni erreur de syntaxe.
+![Compilation](atelier3-smartcontract/imgs/1_compilation.png)
+
+### 2. Déploiement sur le réseau de test Sepolia (MetaMask)
+Déploiement via l'environnement `Injected Provider - MetaMask` sur le testnet Ethereum Sepolia (Chain ID `11155111`).
+![Deploiement Sepolia](atelier3-smartcontract/imgs/2_deployment_sepolia.png)
+
+### 3. Test de Publication (Compte 1)
+Appel de la fonction `publishPost("...")` avec la première adresse MetaMask.
+![Publication Compte 1](atelier3-smartcontract/imgs/3_publish_account1.png)
+
+### 4. Test de Publication (Compte 2)
+Changement de compte dans MetaMask et publication d'un second message avec une adresse différente.
+![Publication Compte 2](atelier3-smartcontract/imgs/4_publish_account2.png)
+
+### 5. Vérification & Récupération des Messages
+Appel de `getTotalPosts()` (renvoie `2`) et de `getPost(index)` pour valider la persistance des données et la distinction des adresses des auteurs.
+![Consultation des Posts](atelier3-smartcontract/imgs/5_get_posts.png)
+
+</details>

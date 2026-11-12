@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiniSocial DApp - Web3</title>
+    <!-- Web3.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+    <style>
+        :root { --primary: #3b82f6; --success: #10b981; --danger: #ef4444; --bg: #f8fafc; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
+        .container { max-width: 650px; margin: 0 auto; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        h1, h2, h3 { margin-top: 0; color: #0f172a; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+        .badge-green { background: #dcfce7; color: #15803d; }
+        .badge-red { background: #fee2e2; color: #b91c1c; }
+        .badge-blue { background: #dbeafe; color: #1d4ed8; }
+        input, textarea, button { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 14px; margin-top: 8px; }
+        button { background: var(--primary); color: white; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        button:hover { filter: brightness(0.92); }
+        button:disabled { background: #94a3b8; cursor: not-allowed; }
+        .post { border-left: 4px solid var(--primary); background: #f8fafc; padding: 12px; border-radius: 0 8px 8px 0; margin-bottom: 12px; }
+        .post-author { font-size: 12px; color: #64748b; font-family: monospace; }
+        .post-msg { font-size: 15px; margin: 6px 0 0 0; font-weight: 500; }
+        .alert { padding: 12px; border-radius: 8px; margin-top: 10px; font-size: 13px; display: none; }
+        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-info { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header Card -->
+    <div class="card">
+        <h1>MiniSocial Web3 DApp</h1>
+        <p style="margin: 0 0 10px 0; color: #64748b;">Réseau social décentralisé sur Ethereum Sepolia</p>
+        
+        <div><strong>Réseau :</strong> <span id="netBadge" class="badge badge-red">Non connecté</span></div>
+        <div style="margin-top: 6px;"><strong>Compte :</strong> <span id="accText" style="font-family: monospace; font-size: 13px;">-</span></div>
+        <button id="btnSyncAccount" onclick="refreshAccount()" disabled style="width: auto; padding: 6px 10px; font-size: 12px;">Synchroniser avec MetaMask</button>
+        <div style="margin-top: 6px;"><strong>Solde :</strong> <span id="balText" style="font-weight: 600;">- ETH</span></div>
+        
+        <div id="alertBox" class="alert alert-error"></div>
+    </div>
+
+    <!-- Contract Config -->
+    <div class="card" style="padding: 14px;">
+        <label style="font-size: 12px; font-weight: 600; color: #64748b;">ADRESSE DU SMART CONTRACT (SEPOLIA)</label>
+        <p style="font-size: 13px; color: #64748b;">Saisissez l'adresse obtenue après le déploiement du contrat. Elle est différente de votre adresse MetaMask et sera mémorisée dans ce navigateur.</p>
+        <input type="text" id="contractInput" placeholder="0x..." style="font-family: monospace; font-size: 13px;">
+        <button onclick="updateContractAddress()" style="background: #475569; margin-top: 6px; padding: 8px;">Mettre à jour l'adresse</button>
+    </div>
+
+    <!-- Publish Card -->
+    <div class="card">
+        <h3>Publier un message</h3>
+        <textarea id="postMsg" rows="2" placeholder="Quoi de neuf sur la blockchain ?"></textarea>
+        <button id="btnPublish" onclick="publish()">Publier sur Sepolia</button>
+    </div>
+
+    <!-- Feed Card -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0;">Fil d'actualité (<span id="postCount">0</span>)</h3>
+            <button onclick="loadFeed()" style="width: auto; padding: 6px 14px; background: #10b981; font-size: 13px;">Rafraîchir</button>
+        </div>
+        <div id="feedList" style="margin-top: 14px;"></div>
+    </div>
+</div>
+
+<script>
+    const CONTRACT_STORAGE_KEY = "minisocialContractAddress";
+    let CONTRACT_ADDRESS = localStorage.getItem(CONTRACT_STORAGE_KEY) || "";
+
+    const CONTRACT_ABI = [
+        { "inputs": [{"name": "_message", "type": "string"}], "name": "publishPost", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+        { "inputs": [{"name": "index", "type": "uint256"}], "name": "getPost", "outputs": [{"name": "", "type": "string"}, {"name": "", "type": "address"}], "stateMutability": "view", "type": "function" },
+        { "inputs": [], "name": "getTotalPosts", "outputs": [{"name": "", "type": "uint256"}], "stateMutability": "view", "type": "function" }
+    ];
+
+    const SEPOLIA_CHAIN_ID = "0xaa36a7"; // 11155111
+
+    let web3;
+    let contract;
+    let currentAccount = null;
+
+    function showAlert(msg, isError = true) {
+        const box = document.getElementById("alertBox");
+        box.style.display = "block";
+        box.className = isError ? "alert alert-error" : "alert alert-info";
+        box.innerText = msg;
+    }
+
+    function clearAlert() {
+        document.getElementById("alertBox").style.display = "none";
+    }
+
+    async function init() {
+        document.getElementById("contractInput").value = CONTRACT_ADDRESS;
+
+        if (!window.ethereum) {
+            showAlert("MetaMask non détecté. Installez l'extension pour utiliser la DApp.");
+            document.getElementById("feedList").innerHTML = "<p style='color: #64748b;'>Connectez MetaMask pour accéder au fil d'actualité.</p>";
+            return;
+        }
+
+        web3 = new Web3(window.ethereum);
+        document.getElementById("btnSyncAccount").disabled = false;
+        window.ethereum.on("accountsChanged", (accounts) => {
+            syncAccount(accounts).catch((err) => {
+                showAlert("Impossible de synchroniser le compte MetaMask : " + err.message);
+            });
+        });
+        window.ethereum.on("chainChanged", () => location.reload());
+        window.addEventListener("focus", refreshAccount);
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) refreshAccount();
+        });
+
+        try {
+            const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+            await syncAccount(accounts);
+            await checkNetwork();
+            if (CONTRACT_ADDRESS && web3.utils.isAddress(CONTRACT_ADDRESS)) {
+                contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+            }
+            await loadFeed();
+        } catch (err) {
+            showAlert("Connexion refusée : " + err.message);
+        }
+    }
+
+    async function syncAccount(accounts) {
+        const selectedAddress = window.ethereum.selectedAddress;
+        const account = (selectedAddress && accounts.find(
+            (address) => address.toLowerCase() === selectedAddress.toLowerCase()
+        )) || accounts[0] || null;
+        if (account === currentAccount) return;
+
+        setCurrentAccount(account);
+        if (account) await checkBalance();
+    }
+
+    async function refreshAccount() {
+        try {
+            const accounts = await window.ethereum.request({ method: "eth_accounts" });
+            await syncAccount(accounts);
+        } catch (err) {
+            showAlert("Impossible de vérifier le compte MetaMask : " + err.message);
+        }
+    }
+
+    function setCurrentAccount(account) {
+        currentAccount = account;
+        document.getElementById("accText").innerText = account || "-";
+        document.getElementById("balText").innerText = account ? "Chargement..." : "- ETH";
+    }
+
+    async function checkNetwork() {
+        const chainId = await window.ethereum.request({ method: "eth_chainId" });
+        const badge = document.getElementById("netBadge");
+
+        if (chainId === SEPOLIA_CHAIN_ID) {
+            badge.className = "badge badge-green";
+            badge.innerText = "Connecté à Sepolia (11155111)";
+            clearAlert();
+        } else {
+            badge.className = "badge badge-red";
+            badge.innerText = "Mauvais réseau !";
+            showAlert("Veuillez basculer MetaMask sur le réseau de test Sepolia.");
+            try {
+                await window.ethereum.request({
+                    method: "wallet_switchEthereumChain",
+                    params: [{ chainId: SEPOLIA_CHAIN_ID }]
+                });
+            } catch (switchError) {
+                console.warn(switchError);
+            }
+        }
+    }
+
+    async function checkBalance() {
+        const account = currentAccount;
+        if (!account) return;
+        const balWei = await web3.eth.getBalance(account);
+        if (currentAccount !== account) return;
+
+        const balEth = web3.utils.fromWei(balWei, "ether");
+        const formatted = parseFloat(balEth).toFixed(4);
+        document.getElementById("balText").innerText = formatted + " ETH";
+
+        const chainId = await window.ethereum.request({ method: "eth_chainId" });
+        if (currentAccount !== account) return;
+        if (parseFloat(formatted) === 0 && chainId === SEPOLIA_CHAIN_ID) {
+            showAlert("Attention : Ce compte a 0 ETH. Vous ne pourrez pas payer le gaz. Basculez vers le compte qui a des SepoliaETH !");
+        }
+    }
+
+    function updateContractAddress() {
+        if (!web3) {
+            showAlert("Connectez MetaMask avant de configurer le contrat.");
+            return;
+        }
+
+        const newAddr = document.getElementById("contractInput").value.trim();
+        if (!web3.utils.isAddress(newAddr)) {
+            showAlert("Adresse Ethereum invalide !");
+            return;
+        }
+
+        CONTRACT_ADDRESS = web3.utils.toChecksumAddress(newAddr);
+        localStorage.setItem(CONTRACT_STORAGE_KEY, CONTRACT_ADDRESS);
+        contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+        clearAlert();
+        loadFeed();
+    }
+
+    async function publish() {
+        if (!currentAccount) return showAlert("Connectez un compte MetaMask avant de publier.");
+        if (!contract) return showAlert("Configurez d'abord l'adresse du contrat déployé.");
+        if (await window.ethereum.request({ method: "eth_chainId" }) !== SEPOLIA_CHAIN_ID) {
+            return showAlert("Veuillez connecter MetaMask au réseau Sepolia.");
+        }
+
+        const text = document.getElementById("postMsg").value.trim();
+        if (!text) return showAlert("Écrivez un message avant de publier.");
+
+        const btn = document.getElementById("btnPublish");
+        btn.disabled = true;
+        btn.innerText = "Validation sur MetaMask...";
+        clearAlert();
+
+        try {
+            await contract.methods.publishPost(text).send({ from: currentAccount });
+            document.getElementById("postMsg").value = "";
+            showAlert("Message publié et miné sur Sepolia !", false);
+            await loadFeed();
+            await checkBalance();
+        } catch (err) {
+            showAlert("Échec de la transaction : " + (err.message || err));
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Publier sur Sepolia";
+        }
+    }
+
+    async function loadFeed() {
+        const list = document.getElementById("feedList");
+        if (!contract) {
+            list.innerHTML = "<p style='color: #64748b;'>Configurez l'adresse du contrat déployé pour afficher les posts.</p>";
+            document.getElementById("postCount").innerText = "0";
+            return;
+        }
+
+        list.innerHTML = "<p style='color: #64748b;'>Chargement des posts...</p>";
+
+        try {
+            const count = await contract.methods.getTotalPosts().call();
+            document.getElementById("postCount").innerText = count;
+
+            if (count == 0) {
+                list.innerHTML = "<p style='color: #94a3b8;'>Aucun post pour le moment. Soyez le premier !</p>";
+                return;
+            }
+
+            list.innerHTML = "";
+            for (let i = count - 1; i >= 0; i--) {
+                const post = await contract.methods.getPost(i).call();
+                list.innerHTML += `
+                    <div class="post">
+                        <div class="post-author">👤 ${post[1].slice(0,6)}...${post[1].slice(-4)} (Post #${i})</div>
+                        <div class="post-msg">${escapeHtml(post[0])}</div>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            list.innerHTML = `<p style='color: var(--danger);'>Erreur de chargement : vérifiez l'adresse du contrat.</p>`;
+        }
+    }
+
+    function escapeHtml(text) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    window.addEventListener("load", init);
+</script>
+
+</body>
+</html>
